@@ -42,7 +42,7 @@
     <!--商家查看订单-->
 
     <select id="allOrder" parameterType="int" resultType="com.digou.entity.Order">
-        SELECT * FROM (OrderForm LEFT JOIN Product ON OrderForm.pID=Product.pID) LEFT JOIN CUser ON OrderForm.cID=CUser.userID WHERE sID=#{0}
+        SELECT * FROM (OrderForm LEFT JOIN Product ON OrderForm.pID=Product.pID) LEFT JOIN CUser ON OrderForm.cID=CUser.userID WHERE sID=#{0} AND isFinish!=4
         <!--SELECT * FROM OrderForm LEFT JOIN Product ON OrderForm.pID=Product.pID WHERE sID=#{0}-->
     </select>
 
@@ -113,4 +113,12 @@
 
     <!--查看订单历史-->
     <!--查看订单历史使用allOrder查询-->
+
+    <!--历史订单下search-->
+    <select id="search" parameterType="int" resultType="com.digou.entity.Order">
+        SELECT * FROM OrderForm LEFT JOIN Product ON OrderForm.pID=Product.pID
+                                LEFT JOIN CUser   ON OrderForm.cID=CUser.userID
+                                LEFT JOIN Seller_User ON Product.sID=Seller_User.id
+                                WHERE Seller_User.id=#{sId}
+    </select>
 </mapper>

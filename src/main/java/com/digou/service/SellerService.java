@@ -9,12 +9,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Array;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @ComponentScan({"com.digou.mapper"})
 @Service("sellerService")
@@ -105,6 +103,9 @@ public class SellerService {
 		for (int i = 0; i < orders.size(); i++) {
 			orders.get(i).Date = timetoDate(orders.get(i).createTime,1);
 		}
+
+
+		sort_order(orders);
 		Map<String, Object> data = new HashMap<>();
 		data.put("order", orders);
 		return ResponseCommon.wrappedResponse(data, 101, null);
@@ -151,8 +152,11 @@ public class SellerService {
 			//计算收入
 			/**
 			 * 记得之后改成 判断订单完成的钱算作收入
+			 * 判断订单状态为已完成后，再计算收入
 			 */
-
+			if(orders_price.get(i).isFinish!=2){
+				continue;
+			}
 			if (time_now_to_create < 1 * day) {
 				//24小时之内
 				income_1 = income_1 + profit;
@@ -347,13 +351,46 @@ public class SellerService {
 			System.out.println("输入正确格式/sellersservice   /查看订单历史");
 		}
 
+		sort_order(need_orders);
 		Map<String, Object> data = new HashMap<>();
 		data.put("history", need_orders);
 		return ResponseCommon.wrappedResponse(data, 101, null);
 	}
+
+	//订单历史下search
+	public Map<String,Object> search_order(HttpServletResponse response, int sId,long start,long end){
+	    ArrayList<Order> all_order=sellerMapper.search(sId);
+
+	    System.out.println(timetoDate(start,1));
+		System.out.println(timetoDate(end,1));
+		ArrayList<Order> time_order=new ArrayList<Order>();
+		for (int i = 0; i < all_order.size() ; i++) {
+			if ((all_order.get(i).createTime >= start) && (all_order.get(i).createTime < end)){
+				all_order.get(i).Date = timetoDate(all_order.get(i).createTime,1);
+				time_order.add(all_order.get(i));
+			}
+		}
+
+		sort_order(time_order);
+        Map<String, Object> data = new HashMap<>();
+        data.put("an_order",time_order);
+        return ResponseCommon.wrappedResponse(data, 101, null);
+    }
 	/**
 	 * 以下为辅助函数部分
 	 */
+	//为订单按照时间顺序排序
+	public void sort_order(ArrayList<Order> order){
+		order.sort(new Comparator<Order>() {
+			@Override
+			public int compare(Order o1, Order o2) {
+				if (o1.createTime >= o2.createTime){
+					return -1;//-1代表放在前面
+				}
+				return 1;
+			}
+		});
+	}
 	//k年前的准确时间
 	public static long Time_5y_ago(long time,int k){
 		long new_time=time;
